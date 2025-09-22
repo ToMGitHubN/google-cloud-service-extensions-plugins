@@ -1,0 +1,12 @@
+steps:
+- name: 'rust:1-slim-trixie'
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      rustup target add wasm32-wasip1 && \
+      cargo build --target=wasm32-wasip1 --release
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '--no-cache', '--platform', 'wasm',
+        '-t', 'asia-docker.pkg.dev/$PROJECT_ID/service-extensions-wasm-plugin-docker/basic-auth-header-response', '.' ]
+images: [ 'asia-docker.pkg.dev/$PROJECT_ID/service-extensions-wasm-plugin-docker/basic-auth-header-response' ]

@@ -10,6 +10,7 @@ GoogleCloudServiceExtensionsPlugins/
 │   ```
 ├── remove_auth_headers_docker/           # 認証ヘッダー削除プラグイン
 │   ```
+├── redirect_to_https_docker/             # HTTPをHTTPSへリダイレクト
 └── README.md                     # このファイル
 ```
 

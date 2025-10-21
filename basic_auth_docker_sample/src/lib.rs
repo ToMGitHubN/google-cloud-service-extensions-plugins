@@ -1,0 +1,44 @@
+use proxy_wasm::traits::*;
+use proxy_wasm::types::*;
+use log::info;
+
+proxy_wasm::main! {{
+    proxy_wasm::set_log_level(LogLevel::Trace);
+    proxy_wasm::set_http_context(|_, _| -> Box<dyn HttpContext> { Box::new(MyHttpContext) });
+}}
+
+struct MyHttpContext;
+
+impl Context for MyHttpContext {}
+
+
+// 認証コードサンプル(ID: user / PW: password をbase64エンコードしたもの)
+const AUTH_STRING: &str = "Basic dXNlcjpwYXNzd29yZA==";
+
+// ベーシック認証
+impl HttpContext for MyHttpContext {
+    fn on_http_request_headers(&mut self, _: usize, _: bool) -> Action {
+
+        // Authorizationヘッダーが存在し、かつ正しい場合はリクエストを続行します。
+        if let Some(authorization) = self.get_http_request_header("Authorization") {
+            if authorization == AUTH_STRING {
+                // Authorizationヘッダーを無条件に削除します
+                self.set_http_request_header("Authorization", None);
+                return Action::Continue;
+            }
+        }
+
+        // Authorizationヘッダーが存在しない、または不正な場合は、401 Unauthorizedレスポンスを生成します。
+        self.send_http_response(
+            401,
+            vec![
+                ("WWW-authenticate", "Basic realm=\"Secure Area\""),
+            ],
+            Some(format!("Unauthorized").as_bytes()),
+        );
+        
+        info!("Forbidden request: Authorization header missing or invalid.");
+
+        return Action::Pause;
+    }
+}
